@@ -85,3 +85,27 @@ NUCER e NUCOM).
 - `components/DeptBox.vue`: nova opção `config.showDescriptionInBox` exibe a denominação completa
   (campo `description`) como subtítulo abaixo da sigla.
 - `components/SearchBox.vue`: a busca passa a considerar também a denominação da unidade.
+
+### Pessoas, cargos, ramais e fotos (Agenda Funcional)
+
+A agenda funcional (`https://agenda.cjf.local/#/`) só é acessível na rede interna do CJF, portanto a
+exportação é feita no navegador do usuário e a importação roda localmente:
+
+1. No Chrome autenticado na agenda, abra o console (F12), cole o conteúdo de
+   `scripts/capturar_agenda.js`, liste todas as pessoas e execute `baixarAgenda()`.
+   Alternativamente, exporte a agenda em CSV/XLSX com as colunas do modelo
+   `dados/agenda_funcional.exemplo.csv`.
+2. Salve o arquivo como `dados/agenda_funcional.json` (ou `.csv` / `.xlsx`).
+3. Execute:
+
+```bash
+python3 scripts/importar_agenda.py     # gera dados/pessoas.json e public/photos/<matricula>.png
+python3 scripts/gerar_dados_cjf.py     # inclui pessoas e lotações em public/data.js
+npm run build
+```
+
+O importador mapeia colunas por sinônimos (nome, matrícula/siape, cargo/função, ramal/telefone,
+e-mail, sigla/lotação, foto, titular), localiza a unidade pela sigla ou pela denominação, define o
+titular de cada unidade (coluna `titular` ou, na ausência, cargos de direção/chefia) e normaliza as
+fotos em PNG 200x200. Pessoas cuja unidade não foi encontrada ficam em `dados/nao_localizados.csv`.
+Os arquivos com dados pessoais estão no `.gitignore` e não são versionados.

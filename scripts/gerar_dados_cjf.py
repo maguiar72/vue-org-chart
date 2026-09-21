@@ -264,8 +264,11 @@ NOTA_COMPARTILHADA = (
     "nos respectivos Termos de Execução Descentralizada de Recursos Orçamentários."
 )
 
-# Pessoas conhecidas (id, nome, função, unidade que gerencia)
-PESSOAS = [
+# Pessoas conhecidas quando não há importação da Agenda Funcional.
+# Campos: id, name, photo, functionName, fields, gerencia (sigla da unidade da qual é titular)
+# e lotacoes (lista de {"sigla", "role"}). Se dados/pessoas.json existir (gerado por
+# scripts/importar_agenda.py), ele substitui esta lista.
+PESSOAS_PADRAO = [
     {
         "id": "P0001",
         "name": "Marcos Aguiar",
@@ -273,8 +276,19 @@ PESSOAS = [
         "functionName": "Diretor da Secretaria de Tecnologia da Informação",
         "fields": {"E-mail": "", "Telefone": "", "Ramal": "", "Matrícula": ""},
         "gerencia": "STI",
+        "lotacoes": [{"sigla": "STI", "role": "Diretor da Secretaria de Tecnologia da Informação"}],
     },
 ]
+ARQUIVO_PESSOAS = os.path.join(RAIZ, "dados", "pessoas.json")
+
+
+def carregar_pessoas():
+    if os.path.exists(ARQUIVO_PESSOAS):
+        with open(ARQUIVO_PESSOAS, encoding="utf-8") as f:
+            pessoas = json.load(f)
+        print("Pessoas carregadas de dados/pessoas.json: %d" % len(pessoas))
+        return pessoas
+    return PESSOAS_PADRAO
 
 
 def tipo_unidade(nome):
@@ -354,20 +368,34 @@ def contar(dept):
 
 
 def main():
-    gerentes = {p["gerencia"]: p["id"] for p in PESSOAS if p.get("gerencia")}
+    pessoas = carregar_pessoas()
+    siglas_validas = set()
+
+    def coletar(no):
+        siglas_validas.add(no[0])
+        for f in no[3]:
+            coletar(f)
+
+    coletar(ARVORE)
+
+    gerentes = {p["gerencia"]: p["id"] for p in pessoas if p.get("gerencia") in siglas_validas}
     chart = montar(ARVORE, gerentes=gerentes)
 
     people = []
     assignments = []
-    for i, p in enumerate(PESSOAS):
-        pessoa = {k: v for k, v in p.items() if k != "gerencia"}
+    for p in pessoas:
+        pessoa = {k: v for k, v in p.items() if k not in ("gerencia", "lotacoes")}
         people.append(pessoa)
-        if p.get("gerencia"):
+        lotacoes = p.get("lotacoes") or ([{"sigla": p["gerencia"], "role": p.get("functionName", "")}] if p.get("gerencia") else [])
+        for lot in lotacoes:
+            if lot.get("sigla") not in siglas_validas:
+                print("  aviso: unidade %r de %s não existe no organograma" % (lot.get("sigla"), p["name"]))
+                continue
             assignments.append({
-                "department_id": slug(p["gerencia"]),
-                "id": i,
+                "department_id": slug(lot["sigla"]),
+                "id": len(assignments),
                 "person_id": p["id"],
-                "role": p["functionName"],
+                "role": lot.get("role", ""),
             })
 
     input_data = {

@@ -1,0 +1,5 @@
+nome;matricula;cargo;ramal;email;sigla;nome_unidade;foto;titular
+Marcos Aguiar;12345;Diretor da Secretaria de Tecnologia da Informação;9000;marcos.aguiar@cjf.jus.br;STI;Secretaria de Tecnologia da Informação;;sim
+Servidor Exemplo 1;23456;Analista Judiciário - Tecnologia da Informação;9101;exemplo1@cjf.jus.br;COSOF;Coordenadoria de Engenharia de Software;;nao
+Servidor Exemplo 2;34567;Chefe de Seção;9102;exemplo2@cjf.jus.br;SESUSO;;;sim
+Servidor Exemplo 3;45678;Técnico Judiciário;9103;exemplo3@cjf.jus.br;GAB-STI;;;
