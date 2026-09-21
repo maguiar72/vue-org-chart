@@ -8,10 +8,10 @@ var CONFIG = {
   "information": "Organograma do Conselho da Justiça Federal (CJF), conforme estrutura de 24/08/2026 e tabela de siglas 02/26.<br><br>Unidades marcadas com <b>*</b> são de atividade compartilhada, executada sob a coordenação de unidades do STJ (OUVE, CESEGI, SETRAN, CECINT, NUBIB, NUCER e NUCOM).<br><br>Encontrou algum erro? Envie um e-mail para a <a href=\"mailto:sti@cjf.jus.br?Subject=Organograma%20CJF\" target=\"_top\">STI</a>.",
   "photoUrl": {
     "prefix": "photos/",
-    "suffix": ".png"
+    "suffix": ".jpg"
   },
   "startView": {
-    "photos": false,
+    "photos": true,
     "names": true,
     "columnview": true,
     "staffColumnview": false,
@@ -53,22 +53,22 @@ var CONFIG = {
   ],
   "personProperties": [
     {
-      "name": "E-mail",
-      "type": "email",
+      "name": "Ramal",
+      "type": "text",
       "order": 0
     },
     {
-      "name": "Telefone",
-      "type": "text",
+      "name": "E-mail",
+      "type": "email",
       "order": 1
     },
     {
-      "name": "Ramal",
+      "name": "Matrícula",
       "type": "text",
       "order": 2
     },
     {
-      "name": "Matrícula",
+      "name": "Afastamento",
       "type": "text",
       "order": 3
     }

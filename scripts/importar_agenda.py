@@ -21,7 +21,7 @@ Colunas reconhecidas (maiúsculas/minúsculas e acentos são ignorados; sinônim
 
 Saída:
   dados/pessoas.json            -> consumido por scripts/gerar_dados_cjf.py
-  public/photos/<id>.png        -> fotos normalizadas (200x200, PNG)
+  public/photos/<id>.jpg        -> fotos normalizadas (200x200, JPEG)
   dados/nao_localizados.csv     -> pessoas cuja unidade não foi encontrada no organograma
 
 Uso:
@@ -40,6 +40,7 @@ import unicodedata
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DADOS = os.path.join(RAIZ, "dados")
 FOTOS_DIR = os.path.join(RAIZ, "public", "photos")
+FOTO_EXT = ".jpg"   # deve coincidir com config.photoUrl.suffix em gerar_dados_cjf.py
 sys.path.insert(0, os.path.join(RAIZ, "scripts"))
 import gerar_dados_cjf as ger  # noqa: E402
 
@@ -49,13 +50,18 @@ SINONIMOS = {
     "cargo": ["cargo", "funcao", "cargo/funcao", "cargo funcao", "descricao_cargo", "descricao cargo", "function", "functionname"],
     "ramal": ["ramal", "telefone", "fone", "tel", "phone"],
     "email": ["email", "e-mail", "correio", "mail"],
-    "unidade": ["sigla", "unidade", "lotacao", "setor", "sigla_unidade", "unidade_sigla", "sigla unidade", "department", "departamento"],
+    "unidade": ["unidade_sigla", "sigla_unidade", "sigla unidade", "sigla", "unidade", "setor", "lotacao", "department", "departamento"],
+    "lotacao_caminho": ["lotacao", "caminho", "hierarquia", "lotacao_completa"],
     "unidade_nome": ["nome_unidade", "nome unidade", "unidade_descricao", "descricao_unidade", "descricao unidade", "lotacao_descricao", "descricao_lotacao",
                      "nome_lotacao", "descricao", "unidade.descricao", "unidade.nome", "lotacao.descricao", "lotacao.nome", "setor.descricao", "setor.nome"],
-    "foto": ["foto", "imagem", "photo", "url_foto", "foto_url", "avatar", "picture"],
+    "foto": ["arquivo_foto", "foto", "imagem", "photo", "url_foto", "foto_url", "avatar", "picture", "foto_arquivo"],
+    "nome_social": ["nomesocial", "nome_social", "nome social"],
+    "afastamento": ["afastamento", "afastado_ate", "afastado ate", "retorno"],
     "titular": ["titular", "chefe", "gestor", "responsavel", "chefia", "manager"],
 }
 PALAVRAS_TITULAR = ("diretor", "secretari", "coordenador", "chefe", "supervisor", "assessor-chefe", "titular")
+# Siglas usadas na agenda que diferem das do organograma
+APELIDOS_SIGLA = {"CG": "CGJF", "IPE": "IPÊ LAB", "IPE LAB": "IPÊ LAB", "PR": "PRESIDENCIA", "CGJF": "CGJF", "TNU": "TNU", "CEJ": "CEJ"}
 
 
 def norm(s):
@@ -64,14 +70,16 @@ def norm(s):
 
 
 def mapear_colunas(colunas):
-    mapa = {}
-    for col in colunas:
-        n = norm(col).replace("_", " ")
-        for campo, alts in SINONIMOS.items():
-            if campo in mapa:
-                continue
-            if n in [a.replace("_", " ") for a in alts]:
+    """Para cada campo, escolhe a coluna cujo nome bate com o sinônimo de maior prioridade."""
+    mapa, usadas = {}, set()
+    normalizadas = {col: norm(col).replace("_", " ") for col in colunas}
+    for campo, alts in SINONIMOS.items():
+        for alt in alts:
+            alt_n = alt.replace("_", " ")
+            col = next((c for c, n in normalizadas.items() if n == alt_n and c not in usadas), None)
+            if col is not None:
                 mapa[campo] = col
+                usadas.add(col)
                 break
     return mapa
 
@@ -177,10 +185,25 @@ def indexar_unidades():
     return por_sigla, por_nome
 
 
-def localizar_unidade(sigla_txt, nome_txt, por_sigla, por_nome):
+def localizar_unidade(sigla_txt, nome_txt, por_sigla, por_nome, caminho_txt=""):
     s = norm(sigla_txt).rstrip("*").strip()
+    if s.upper() in APELIDOS_SIGLA:
+        return APELIDOS_SIGLA[s.upper()]
     if s in por_sigla:
         return por_sigla[s]
+    # último trecho do caminho de lotação: "... > SETRAN (SEÇÃO DE TRANSPORTE)"
+    if caminho_txt and ">" in caminho_txt:
+        ultimo = caminho_txt.split(">")[-1].strip()
+        m = re.match(r"^(.+?)\s*\((.+)\)\s*$", ultimo)
+        if m:
+            sig_c, nome_c = m.group(1).strip(), m.group(2).strip()
+            if norm(sig_c).upper() in APELIDOS_SIGLA:
+                return APELIDOS_SIGLA[norm(sig_c).upper()]
+            if norm(sig_c) in por_sigla:
+                return por_sigla[norm(sig_c)]
+            if norm(nome_c) in por_nome:
+                return por_nome[norm(nome_c)]
+            nome_txt = nome_txt or nome_c
     # "GAB-STI", "GAB STI", "GAB/STI"
     s2 = re.sub(r"[\s/]+", "-", s)
     if s2 in por_sigla:
@@ -216,9 +239,11 @@ def salvar_foto(origem, pid, fotos_capturadas, sem_fotos):
             if r.ok:
                 dados = r.content
         else:
-            cand = os.path.join(DADOS, "fotos", src)
-            if os.path.exists(cand):
-                dados = open(cand, "rb").read()
+            for cand in (os.path.join(DADOS, src), os.path.join(DADOS, "fotos", src),
+                         os.path.join(DADOS, "fotos", os.path.basename(src)), src):
+                if os.path.isfile(cand):
+                    dados = open(cand, "rb").read()
+                    break
     except Exception as e:  # rede interna indisponível, arquivo corrompido etc.
         print("  aviso: foto de %s não obtida (%s)" % (pid, e))
     if not dados:
@@ -228,9 +253,9 @@ def salvar_foto(origem, pid, fotos_capturadas, sem_fotos):
         im = Image.open(io.BytesIO(dados)).convert("RGB")
         lado = min(im.size)
         im = im.crop(((im.width - lado) // 2, (im.height - lado) // 2, (im.width + lado) // 2, (im.height + lado) // 2))
-        im = im.resize((200, 200))
+        im = im.resize((200, 200), Image.LANCZOS)
         os.makedirs(FOTOS_DIR, exist_ok=True)
-        im.save(os.path.join(FOTOS_DIR, pid + ".png"), "PNG", optimize=True)
+        im.save(os.path.join(FOTOS_DIR, pid + FOTO_EXT), "JPEG", quality=82, optimize=True)
         return pid
     except Exception as e:
         print("  aviso: foto de %s inválida (%s)" % (pid, e))
@@ -273,7 +298,7 @@ def main():
     pessoas, nao_localizados, ids = {}, [], set()
 
     for reg in registros:
-        nome = valor(reg, mapa, "nome")
+        nome = valor(reg, mapa, "nome_social") or valor(reg, mapa, "nome")
         if not nome:
             continue
         matricula = valor(reg, mapa, "matricula")
@@ -285,7 +310,8 @@ def main():
         ids.add(pid)
 
         cargo = valor(reg, mapa, "cargo")
-        unidade = localizar_unidade(valor(reg, mapa, "unidade"), valor(reg, mapa, "unidade_nome"), por_sigla, por_nome)
+        unidade = localizar_unidade(valor(reg, mapa, "unidade"), valor(reg, mapa, "unidade_nome"), por_sigla, por_nome,
+                                    valor(reg, mapa, "lotacao_caminho"))
         if not unidade:
             nao_localizados.append({"nome": nome, "unidade": valor(reg, mapa, "unidade"), "unidade_nome": valor(reg, mapa, "unidade_nome"), "cargo": cargo})
 
@@ -297,7 +323,8 @@ def main():
             "name": nome,
             "photo": "",
             "functionName": cargo,
-            "fields": {"E-mail": valor(reg, mapa, "email"), "Telefone": "", "Ramal": valor(reg, mapa, "ramal"), "Matrícula": matricula},
+            "fields": {"E-mail": valor(reg, mapa, "email"), "Ramal": valor(reg, mapa, "ramal"), "Matrícula": matricula,
+                       "Afastamento": ("até " + valor(reg, mapa, "afastamento")) if valor(reg, mapa, "afastamento") else ""},
             "lotacoes": [],
             "gerencia": "",
         })

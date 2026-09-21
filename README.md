@@ -99,7 +99,7 @@ exportação é feita no navegador do usuário e a importação roda localmente:
 3. Execute:
 
 ```bash
-python3 scripts/importar_agenda.py     # gera dados/pessoas.json e public/photos/<matricula>.png
+python3 scripts/importar_agenda.py     # gera dados/pessoas.json e public/photos/<matricula>.jpg
 python3 scripts/gerar_dados_cjf.py     # inclui pessoas e lotações em public/data.js
 npm run build
 ```
@@ -107,5 +107,10 @@ npm run build
 O importador mapeia colunas por sinônimos (nome, matrícula/siape, cargo/função, ramal/telefone,
 e-mail, sigla/lotação, foto, titular), localiza a unidade pela sigla ou pela denominação, define o
 titular de cada unidade (coluna `titular` ou, na ausência, cargos de direção/chefia) e normaliza as
-fotos em PNG 200x200. Pessoas cuja unidade não foi encontrada ficam em `dados/nao_localizados.csv`.
+fotos em JPEG 200x200. Pessoas cuja unidade não foi encontrada ficam em `dados/nao_localizados.csv`.
 Os arquivos com dados pessoais estão no `.gitignore` e não são versionados.
+
+Estado atual: a instância publicada em `docs/` já contém as 269 pessoas da Agenda Funcional
+(exportação de 21/09/2026), com foto, cargo, ramal, e-mail e titular de cada unidade. A exportação
+reconhecida pelo importador tem as colunas `matricula;nome;nomeSocial;ramal;email;cargo;lotacao;
+unidade_sigla;dataAniversario;aniversariante;afastamento;arquivo_foto` e as fotos na pasta `fotos/`.

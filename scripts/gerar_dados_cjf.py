@@ -274,7 +274,7 @@ PESSOAS_PADRAO = [
         "name": "Marcos Aguiar",
         "photo": "",
         "functionName": "Diretor da Secretaria de Tecnologia da Informação",
-        "fields": {"E-mail": "", "Telefone": "", "Ramal": "", "Matrícula": ""},
+        "fields": {"E-mail": "", "Ramal": "", "Matrícula": "", "Afastamento": ""},
         "gerencia": "STI",
         "lotacoes": [{"sigla": "STI", "role": "Diretor da Secretaria de Tecnologia da Informação"}],
     },
@@ -417,9 +417,9 @@ def main():
             "Encontrou algum erro? Envie um e-mail para a "
             "<a href=\"mailto:sti@cjf.jus.br?Subject=Organograma%20CJF\" target=\"_top\">STI</a>."
         ),
-        "photoUrl": {"prefix": "photos/", "suffix": ".png"},
+        "photoUrl": {"prefix": "photos/", "suffix": ".jpg"},
         "startView": {
-            "photos": False,
+            "photos": True,
             "names": True,
             "columnview": True,
             "staffColumnview": False,
@@ -443,10 +443,10 @@ def main():
             {"name": "Observação", "type": "text"},
         ],
         "personProperties": [
-            {"name": "E-mail", "type": "email", "order": 0},
-            {"name": "Telefone", "type": "text", "order": 1},
-            {"name": "Ramal", "type": "text", "order": 2},
-            {"name": "Matrícula", "type": "text", "order": 3},
+            {"name": "Ramal", "type": "text", "order": 0},
+            {"name": "E-mail", "type": "email", "order": 1},
+            {"name": "Matrícula", "type": "text", "order": 2},
+            {"name": "Afastamento", "type": "text", "order": 3},
         ],
     }
 
