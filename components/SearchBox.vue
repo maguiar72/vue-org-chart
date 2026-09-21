@@ -51,10 +51,11 @@ export default {
     searchDept: function(search) {
       var result = []
       this.orgArray.forEach(e => {
-        if (e.name.toLowerCase().indexOf(search.toLowerCase()) > -1) {
+        var txt = (e.name + ' ' + (e.description || '')).toLowerCase()
+        if (txt.indexOf(search.toLowerCase()) > -1) {
           result.push({
             dept: e,
-            name: e.name,
+            name: e.description ? e.name + ' - ' + e.description : e.name,
             context: e.parent ? e.parent.name : ''
           })
         }

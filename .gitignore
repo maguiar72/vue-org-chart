@@ -79,3 +79,12 @@ dist
 
 # IDE
 .idea
+
+# Dados pessoais da Agenda Funcional (não versionar)
+dados/agenda_funcional.json
+dados/agenda_funcional.csv
+dados/agenda_funcional.xlsx
+dados/agenda_capturada.json
+dados/pessoas.json
+dados/nao_localizados.csv
+dados/fotos/

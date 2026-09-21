@@ -929,7 +929,8 @@ function processData10(dept, orgArray) {
   })
   dept.manager = manager ? manager : { name: '' }
   dept.dataFields = dept.dataFields
-  dept.showChildren = false
+  // Respeita a expansão inicial definida no arquivo de dados (showChildren: true)
+  dept.showChildren = dept.showChildren === true
   dept.isStaff = dept.staff_department == 'Y'
   dept.showParents = true
   dept.onlyParents = false
