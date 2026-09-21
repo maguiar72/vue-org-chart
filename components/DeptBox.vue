@@ -17,6 +17,7 @@
                   .level_indicator(:style="{backgroundColor:config.levelColors[level-1]||'#FFFFFF'}")
                   div.textdiv(:style="{ height: config.boxHeight + 'px', width: config.boxWidth + 'px' }")
                     .name(v-html="departmentData.name")
+                    .name_description(v-if="config.showDescriptionInBox && departmentData.description" :title="departmentData.description") {{departmentData.description}}
                     .name_manager(v-if="managerNameView") {{departmentData.manager.name}}
                 td.drill0
                   .drill 
@@ -284,6 +285,16 @@ export default {
 }
 .name2 {
   top: 14px;
+}
+.name_description {
+  overflow-wrap: break-word;
+  min-width: 1%;
+  display: block;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.15;
+  font-weight: 400;
+  transition: color var(--transition-speed);
 }
 .name_manager {
   overflow-wrap: break-word;
